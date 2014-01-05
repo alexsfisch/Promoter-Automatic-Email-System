@@ -1,13 +1,12 @@
-/* 
-* Mail Merge HD with GUI, Notifications and better Gmail integration
-* @labnol 03/06/2012
-*/
 
-// Updated 18/04/2012 - Fixed the BCC issue
-// Updated 29/06/2013 - Fixed the Sent Status issue
-// Updated 01/07/2013 - Fixed the Inline Images Issue
-// Updated 15/08/2013 - Fixed the UI
 
+//NEW CODE
+
+//anytime is eddited
+function onEdit(e){
+  startMailMerge(e);
+}
+}
 function onOpen() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var menu = [ 
@@ -40,7 +39,10 @@ function fnMailMerge() {
   var lb = myapp.createListBox(false).setWidth(250).setName('templates').addItem("Select template...").setVisibleItemCount(1);
   
   for (var i = 0; i < threads.length; i++) {
-   lb.addItem((i+1)+'- '+threads[i].getFirstMessageSubject().substr(0, 40));
+    //finding correct draft
+    if(threads[i].getFirstMessageSubject() == "Thank You For Your Interest"){
+      lb.addItem((i+1)+'- '+threads[i].getFirstMessageSubject().substr(0, 40));
+    }
   }
 
   top_panel.add(lb);
