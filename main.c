@@ -2,11 +2,104 @@
 
 //NEW CODE
 
-//anytime is eddited
-function onEdit(e){
-  startMailMerge(e);
+//new function
+//anytime spreadsheet is edited (AKA form submit), start mail merge
+
+//set a trigger to start this function on every form submit
+function formSubmitReply(e){
+ var ss = SpreadsheetApp.getActiveSpreadsheet();
+ var dataSheet = ss.getSheets()[0];
+ if(dataSheet.getRange(1,dataSheet.getLastColumn()).getValue() != 'Automatic Response Status'){
+   dataSheet.getRange(1,dataSheet.getLastColumn()+1).setValue('Automatic Response Status');
+ }
+ var headers = dataSheet.getRange(1, 1, 1, dataSheet.getLastColumn()).getValues();
+ var emailColumnFound = false;
+
+ //FIND THE COLUMN THAT CONTAINS EMAIL ADDRESSES
+ for(i in headers[0]){
+   if(headers[0][i] == "Email Address"){
+     emailColumnFound = true;
+   }
+ }
+ //IF CAN'T FIND, ASK USER TO MANUALLY INPUT
+ if(!emailColumnFound){
+   var emailColumn = Browser.inputBox("Which column contains the recipient's email address ? (A, B,...)");
+   dataSheet.getRange(emailColumn+''+1).setValue("Email Address");
+ }
+
+ var dataRange = dataSheet.getRange(2, 1, dataSheet.getLastRow() - 1, dataSheet.getLastColumn());
+
+
+//GET THE CORRECT DRAFT
+ var selectedTemplate = GmailApp.search("in:drafts")[(parseInt("TEST")-1)].getMessages()[0];
+ var emailTemplate = selectedTemplate.getBody();
+ var attachments = selectedTemplate.getAttachments();
+ var cc = selectedTemplate.getCc();
+ var bcc = "";
+ if (e.parameter.bcc == "true") {
+   bcc = selectedTemplate.getFrom();
+ }
+
+//GENERATE AND PROPEGATE THE EMAIL
+  var regMessageId = new RegExp(selectedTemplate.getId(), "g");
+  
+  if (emailTemplate.match(regMessageId) != null) {
+    var inlineImages = {};
+    var nbrOfImg = emailTemplate.match(regMessageId).length;
+    var imgVars = emailTemplate.match(/<img[^>]+>/g);
+    var imgToReplace = [];
+    for (var i = 0; i < imgVars.length; i++) {
+      if (imgVars[i].search(regMessageId) != -1) {
+        var id = imgVars[i].match(/Inline\simages?\s(\d)/);
+        imgToReplace.push([parseInt(id[1]), imgVars[i]]);
+      }
+    }
+    imgToReplace.sort(function (a, b) {
+      return a[0] - b[0];
+    });
+    for (var i = 0; i < imgToReplace.length; i++) {
+      var attId = (attachments.length - nbrOfImg) + i;
+      var title = 'inlineImages' + i;
+      inlineImages[title] = attachments[attId].copyBlob().setName(title);
+      attachments.splice(attId, 1);
+      var newImg = imgToReplace[i][1].replace(/src="[^\"]+\"/, "src=\"cid:" + title + "\"");
+      emailTemplate = emailTemplate.replace(imgToReplace[i][1], newImg);
+    }
+  }
+
+ objects = getRowsData(dataSheet, dataRange);
+ for (var i = 0; i < objects.length; ++i) {   
+   var rowData = objects[i];
+    //AF: changed row to automaticRepsonseStatus
+   if(rowData.automaticResponseStatus != "EMAIL_SENT"){
+     
+     // Replace markers (for instance ${"First Name"}) with the 
+     // corresponding value in a row object (for instance rowData.firstName).
+     
+     var emailText = fillInTemplateFromObject(emailTemplate, rowData);     
+     var emailSubject = fillInTemplateFromObject(selectedTemplate.getSubject(), rowData);
+      //AF: SEND EMAIL  
+     GmailApp.sendEmail(rowData.emailAddress, emailSubject, emailText,
+                        {name: e.parameter.name, attachments: attachments, htmlBody: emailText, cc: cc, bcc: bcc, inlineImages: inlineImages});      
+
+  
+     //AF: get current date/time to use as timestamp
+     var dt = new DateTime();
+
+
+     //AF: PRINT TIMESTAMP
+     dataSheet.getRange(i+2,dataSheet.getLastColumn()).setValue("EMAIL_SENT: "+ dt.formats.pretty.b);
+     
+   }  
+ }
+  
+ var app = UiApp.getActiveApplication();
+ app.close();
+ return app;
+
 }
-}
+
+
 function onOpen() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var menu = [ 
@@ -21,11 +114,6 @@ function labnolReset() {
   var mySheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();   
   mySheet.getRange(2, 1, mySheet.getMaxRows() - 1, mySheet.getMaxColumns()).clearContent();
 }
-
-/* 
-* Forked from gist: 1838132 by ligthyear 
-* https://gist.github.com/1907310
-*/
 
 function fnMailMerge() {
   var threads = GmailApp.search('in:draft', 0, 10);
@@ -64,10 +152,6 @@ function fnMailMerge() {
   SpreadsheetApp.getActiveSpreadsheet().show(myapp);
 }
 
-/*
-* The code is written by Romain Vialard - Yet Another Mail Merge
-* https://docs.google.com/document/d/1fsjHYL8TeHS2eiG217hqTgtGWI1RhRXcIvpfZFmIa3A/edit
-*/
 
 function startMailMerge(e) {
  var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -77,19 +161,25 @@ function startMailMerge(e) {
  }
  var headers = dataSheet.getRange(1, 1, 1, dataSheet.getLastColumn()).getValues();
  var emailColumnFound = false;
+
+ //FIND THE COLUMN THAT CONTAINS EMAIL ADDRESSES
  for(i in headers[0]){
    if(headers[0][i] == "Email Address"){
      emailColumnFound = true;
    }
  }
+ //IF CAN'T FIND, ASK USER TO MANUALLY INPUT
  if(!emailColumnFound){
    var emailColumn = Browser.inputBox("Which column contains the recipient's email address ? (A, B,...)");
    dataSheet.getRange(emailColumn+''+1).setValue("Email Address");
  }
+
  var dataRange = dataSheet.getRange(2, 1, dataSheet.getLastRow() - 1, dataSheet.getLastColumn());
 
+//POP-UP NOTIFICATION FOR USER
  ss.toast('Starting mail merge, please wait...','Mail Merge',-1);
   
+
  var selectedTemplate = GmailApp.search("in:drafts")[(parseInt(e.parameter.templates.substr(0, 2))-1)].getMessages()[0];
  var emailTemplate = selectedTemplate.getBody();
  var attachments = selectedTemplate.getAttachments();
@@ -140,12 +230,10 @@ function startMailMerge(e) {
      GmailApp.sendEmail(rowData.emailAddress, emailSubject, emailText,
                         {name: e.parameter.name, attachments: attachments, htmlBody: emailText, cc: cc, bcc: bcc, inlineImages: inlineImages});      
 
-     //AF: Added: prints date with sent confirmation
-     //var d = new Date();
-     //var n = d.getDate();
-
+  
+     //AF: get current date/time to use as timestamp
      var dt = new DateTime();
-    //$("#eleID").text(dt.formats.pretty.b);
+
 
 
      dataSheet.getRange(i+2,dataSheet.getLastColumn()).setValue("EMAIL_SENT: "+ dt.formats.pretty.b);
