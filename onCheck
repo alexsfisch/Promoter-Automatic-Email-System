@@ -1,0 +1,9 @@
+function onCheck(e){
+
+  //locate edited row
+  //row = edited row
+
+  SpreadsheetApp.getActiveSheet().getRange(row, a, 1, 8) //row, column, numRows, numColumns
+  
+
+}
