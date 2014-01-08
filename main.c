@@ -31,14 +31,14 @@ function formSubmitReply(e){
 
 
 //GET THE CORRECT DRAFT
- var selectedTemplate = GmailApp.search("in:drafts")[(parseInt("TEST")-1)].getMessages()[0];
+ var selectedTemplate = GmailApp.search("in:drafts")[0].getMessages()[0];
  var emailTemplate = selectedTemplate.getBody();
  var attachments = selectedTemplate.getAttachments();
  var cc = selectedTemplate.getCc();
  var bcc = "";
- if (e.parameter.bcc == "true") {
-   bcc = selectedTemplate.getFrom();
- }
+ //if (e.parameter.bcc == "true") {
+   bcc = "info@bouncemediagroup.com";
+ //}
 
 //GENERATE AND PROPEGATE THE EMAIL
   var regMessageId = new RegExp(selectedTemplate.getId(), "g");
@@ -80,7 +80,7 @@ function formSubmitReply(e){
      var emailSubject = fillInTemplateFromObject(selectedTemplate.getSubject(), rowData);
       //AF: SEND EMAIL  
      GmailApp.sendEmail(rowData.emailAddress, emailSubject, emailText,
-                        {name: e.parameter.name, attachments: attachments, htmlBody: emailText, cc: cc, bcc: bcc, inlineImages: inlineImages});      
+                        {name: selectedTemplate.name, attachments: attachments, htmlBody: emailText, cc: cc, bcc: bcc, inlineImages: inlineImages});      
 
   
      //AF: get current date/time to use as timestamp
