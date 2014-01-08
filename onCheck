@@ -1,25 +1,62 @@
-function onCheck(e){
-
-  //locate edited row
-  //row = edited row
-
-
-  var range = SpreadsheetApp.getActiveSheet().getRange(row, a, 1, 8) //row, column, numRows, numColumns
-  var values = range.getValues();
-
-  var spr = SpreadsheetApp.getActiveSpreadsheet();
-  var newSheet = SpreadsheetApp.setActiveSheet(spr.getSheets()[1]);
-
-  //find last empty row
-  var columnNew = spr.getRange('A:A');
-  var tempValues = column.getValues(); //get all data in one call
-  var count = 0;
-  while (values[count][0]!="") {
-    count++;
+function onEdit(e){
+  var editedCell =  lastEditedCell();
+  if (editedCell.getColumn() == J) {
+    onCheck(editedCell);
   }
-  var rangeFinal = "a"+ parseInt(count)+":H"+parseInt(count);
 
-  //now count is equal to the last final place
-  var newRange = newSheet.getRange(rangeFinal)
-  newRange.setValues(values);
+}
+
+function onCheck(editedCell){
+  //if selected
+  if (editedCell.getValues == "√"){}
+    var range = SpreadsheetApp.getActiveSheet().getRange(row, a, 1, 8) //row, column, numRows, numColumns
+    var values = range.getValues();
+
+    var spr = SpreadsheetApp.getActiveSpreadsheet();
+    var newSheet = SpreadsheetApp.setActiveSheet(spr.getSheets()[1]);
+
+    //find last empty row
+    var columnNew = spr.getRange('A:A');
+    var tempValues = column.getValues(); //get all data in one call
+    var count = 0;
+    while (values[count][0]!="") {
+      count++;
+    }
+    var rangeFinal = "a"+ parseInt(count)+":H"+parseInt(count);
+
+    //now count is equal to the last final place
+    var newRange = newSheet.getRange(rangeFinal)
+    newRange.setValues(values);
+  }
+  //if not selected
+  else if (editedCell.getValues != "√"){
+  var range = SpreadsheetApp.getActiveSheet().getRange(row, a, 1, 8) //row, column, numRows, numColumns
+    var values = range.getValues();
+
+    var spr = SpreadsheetApp.getActiveSpreadsheet();
+    var newSheet = SpreadsheetApp.setActiveSheet(spr.getSheets()[2]);
+
+    //find last empty row
+    var columnNew = spr.getRange('A:A');
+    var tempValues = column.getValues(); //get all data in one call
+    var count = 0;
+    while (values[count][0]!="") {
+      count++;
+    }
+    var rangeFinal = "a"+ parseInt(count)+":H"+parseInt(count);
+
+    //now count is equal to the last final place
+    var newRange = newSheet.getRange(rangeFinal)
+    newRange.setValues(values);
+
+  }
+}
+
+function lastEditedCell(){
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getActiveSheet();
+  var cell = ss.getActiveCell();
+
+  return cell
+
 }
