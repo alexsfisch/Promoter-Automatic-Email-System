@@ -1,5 +1,3 @@
-
-
 //NEW CODE
 
 //new function
@@ -36,9 +34,7 @@ function formSubmitReply(e){
  var attachments = selectedTemplate.getAttachments();
  var cc = selectedTemplate.getCc();
  var bcc = "";
- //if (e.parameter.bcc == "true") {
    bcc = "info@bouncemediagroup.com";
- //}
 
 //GENERATE AND PROPEGATE THE EMAIL
   var regMessageId = new RegExp(selectedTemplate.getId(), "g");
